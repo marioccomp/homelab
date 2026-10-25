@@ -10,3 +10,17 @@ class FileOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class FolderCreate(BaseModel):
+    name: str
+
+    class Config:
+        from_attributes = True
+
+class FolderOut(BaseModel):
+    id: int
+    name: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
