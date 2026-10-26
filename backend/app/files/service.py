@@ -2,7 +2,7 @@ import uuid
 import shutil
 from pathlib import Path
 from sqlalchemy.orm import Session
-from fastapi import UploadFile
+from fastapi import UploadFile, HTTPException, status
 from sqlalchemy import select
 
 
@@ -12,9 +12,23 @@ from app.files.models import File, Folder
 STORAGE_DIR = Path(settings.storage_dir)
 STORAGE_DIR.mkdir(parents=True, exist_ok=True)
 
-def save_upload(db: Session, upload: UploadFile) -> File:
+def _safe_path(relative: str) -> Path:
+    base = STORAGE_DIR.resolve()
+    path = (base / relative).resolve()
+    if not path.is_relative_to(base):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Caminho inválido")
+    return path
+
+
+def save_upload(db: Session, folder_path: str | None, upload: UploadFile) -> File:
+
     storage_filename = f"{uuid.uuid4().hex}_{upload.filename}"
-    destination = STORAGE_DIR / storage_filename
+    target_dir = _safe_path(folder_path) if folder_path else STORAGE_DIR.resolve()
+
+    if not target_dir.is_dir():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pasta não encontrada")
+
+    destination = target_dir / storage_filename
 
     with destination.open("wb") as buffer:
         shutil.copyfileobj(upload.file, buffer) # chunks

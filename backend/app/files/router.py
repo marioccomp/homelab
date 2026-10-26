@@ -8,8 +8,8 @@ from app.files.schemas import FileOut, FolderCreate, FolderOut
 router = APIRouter()
 
 @router.post("/", response_model=FileOut)
-def upload_file(upload: UploadFile = FastAPIFile(...), db: Session = Depends(get_db)):
-    return service.save_upload(db, upload)
+def upload_file(folder_path: str | None = None, upload: UploadFile = FastAPIFile(...), db: Session = Depends(get_db)):
+    return service.save_upload(db=db, folder_path=folder_path, upload=upload)
 
 @router.get("/")
 def list_files(db: Session = Depends(get_db)):
